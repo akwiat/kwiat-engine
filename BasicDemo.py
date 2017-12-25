@@ -1,12 +1,22 @@
 from Universe import Universe
-from BasicGraphics import PixiDecorator
+# from BasicGraphics import PixiDecorator
 from Dof import Dof
 
-Graphics = PixiDecorator
+# Graphics = PixiDecorator
 
-class Particle(Dof):
-	def __init__(self):
-		self.add()
+def Particle(*, universe):
+
+	class Particle(Dof):
+		def __init__(self):
+			self.add_dof("position", universe.dofs["KinematicPosition"])
+
+			universe.client.display(self.dofs["position"]) # adds the client interaction
+			universe.client.gui_track(self.dofs["position"], "0") # does gui stuff, adds an update interaction
+
+			universe.client.gui_controls(self.dofs["position"], filter=isPaused) # adds a controls interaction and filters on the custom filter
+
+	return Particle
+
 
 class BDUniverse(Universe):
 	def __init__(self, d=2):
@@ -22,6 +32,8 @@ class BDUniverse(Universe):
 
 		self.dofs["KinematicPosition"] = CreateKinematicPosition(universe=self)
 		KinematicPosition = self.dofs["KinematicPosition"]
+
+		self.dofs["Particle"] = Particle(universe=self)
 		# KinematicPosition.interactions.append(CreateBoundingBoxInteraction(universe=self))
 
 		# self.particles["Basic"] = KinematicPosition

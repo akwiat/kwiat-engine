@@ -180,7 +180,9 @@ class Dof(metaclass=DofMeta, TreeStructure):
 		# We need this instead of __init__ to avoid calling __getattr__ and __setattr__ during initialization
 		ret = super().__new__(self, *args, **kwargs)
 		ret.__dict__["dofs"] = {}
+		ret.__dict__["client_interactions"] = []
 		return ret
+
 
 	def propagate(self, data=None):
 		for name, dof in self.dofs.items():
