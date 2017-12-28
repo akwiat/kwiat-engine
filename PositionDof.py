@@ -31,6 +31,10 @@ def CreateStaticPosition(universe=None):
 	return StaticPosition
 
 def CreateKinematicPosition(universe=None):
+	def BK(pd):
+		pd["x"] += pd["v"]
+		pd["v"] += pd["a"]
+
 	KP = CreatePosition(universe=universe)
 	bk = Interaction.Build(logic=BK) # Selector is none, filter is none
 	KP.register_interaction("basic_kinematics", bk)

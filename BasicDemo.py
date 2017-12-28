@@ -2,6 +2,7 @@ from Universe import Universe
 # from BasicGraphics import PixiDecorator
 from Dof import Dof
 
+from PixiGraphicsManager import PixiGraphicsManager as PixiClient
 # Graphics = PixiDecorator
 
 def Particle(*, universe):
@@ -13,7 +14,7 @@ def Particle(*, universe):
 			universe.client.display(self.dofs["position"]) # adds the client interaction
 			universe.client.gui_track(self.dofs["position"], "0") # does gui stuff, adds an update interaction
 
-			universe.client.gui_controls(self.dofs["position"], filter=isPaused) # adds a controls interaction and filters on the custom filter
+			# universe.client.gui_controls(self.dofs["position"], filter=isPaused) # adds a controls interaction and filters on the custom filter
 
 	return Particle
 
@@ -21,6 +22,7 @@ def Particle(*, universe):
 class BDUniverse(Universe):
 	def __init__(self, d=2):
 		super().__init__()
+		self.client = PixiClient()
 
 		self.dofs["Vector"] = CreateVector(d=d)
 		self.dofs["StaticPosition"] = CreateStaticPosition(universe=self)
@@ -39,4 +41,8 @@ class BDUniverse(Universe):
 		# self.particles["Basic"] = KinematicPosition
 		# basic_collision = TypeInteraction(name="bc", logic=SelfCollision(), particles=["Basic"])
 		# basic_collision = TypeInteraction(name="bc", selector=BasicCollision(), action=RemoveAll(), particles=["Basic"])
+
+
+if __name__ == "__main__":
+	u = BDUniverse()
 

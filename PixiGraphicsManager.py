@@ -1,7 +1,8 @@
 from browser import document, window, timer
 from PixiGraphic import PixiGraphic
 
-from Action import Action
+# from Action import Action
+from Client import Client
 
 class UpdateAction(Action):
 	def __init__(self, pd, pixigraphic):
@@ -13,7 +14,7 @@ class UpdateAction(Action):
 		self.pixigraphic.obj.y = pd.x[1]
 
 
-class PixiGraphicsManager:
+class PixiGraphicsManager(Client):
 	def __init__(self):
 		h = window.innerHeight
 		self.app = window.PIXI.Application.new({"width": h, "height": h})
