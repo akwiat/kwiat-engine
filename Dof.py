@@ -1,6 +1,6 @@
 import json
 from Tree import TreeStructure
-
+from Interaction import Interaction
 def get_dataprops(obj):
 	dataprops = None
 	if hasattr(obj, "__dataprops__"):
@@ -30,8 +30,10 @@ def JsonSerialize(cls):
 				current_result_object = super(cls, self).__toJSON__()
 			dataprops = get_dataprops(self)
 			result = current_result_object or {}
-			
 			for k,v in dataprops.items():
+				print("key: "+k)
+				print(v)
+
 				if hasattr(v, "__toJSON__"):
 					result[k] = v.__toJSON__()
 				else:
@@ -171,29 +173,80 @@ class DofMeta(type):
 @JsonCopy
 @BasicEq
 # @AllowOnAssignment
-class Dof(metaclass=DofMeta, TreeStructure):
+class Dof(metaclass=DofMeta):
 	# Interactions are functions defined on the class
 	# Interactions = [] # list of interaction instances, which all have names
 
 	# __getattr__ and __setattr__ are configured so dofs can be acessed as if they were attributes
-	def __new__(self, *args, **kwargs):
-		# We need this instead of __init__ to avoid calling __getattr__ and __setattr__ during initialization
-		ret = super().__new__(self, *args, **kwargs)
-		ret.__dict__["dofs"] = {}
-		ret.__dict__["client_interactions"] = []
-		return ret
+	# def __new__(self, *args, **kwargs):
+	# 	# We need this instead of __init__ to avoid calling __getattr__ and __setattr__ during initialization
+	# 	ret = super().__new__(self, *args, **kwargs)
+	# 	ret.__dict__["dofs"] = {}
+	# 	ret.__dict__["client_interactions"] = []
+	# 	# ret.__dict__["initial_conditions"] = []
+	# 	return ret
 
+	def __init__(self):
+		self.dofs = {}
+		self.parent = None
 
-	def propagate(self, data=None):
+		self.client_interactions = []
+		self.initial_conditions = []
+
+		self.tag = None
+
+	def propagate(self, data=None, tag_logic=None):
 		for name, dof in self.dofs.items():
-			dof.propagate(data)
+			# print("propagating dof: ", name)
 
-		for name,interaction in self.Interactions.items():
-			interaction(entity=self, data=data) # interaction is implemented via __call__
+			dof.propagate(data=data, tag_logic=tag_logic)
+
+		for i in self.Interactions:
+			self.perform_interaction(i, self, tag_logic=tag_logic)
+			# i.perform(self)
+
+		if tag_logic is None or tag_logic(self) is True:
+			self.action()
+
+		for ci in self.client_interactions:
+			self.perform_interaction(ci, tag_logic=tag_logic)
+			# ci.perform()
+
+	@staticmethod 
+	def perform_interaction(interaction, *args, tag_logic=None):
+		if tag_logic is None:
+			if interaction.tag is None:
+				interaction.perform(*args)
+		else:
+			if tag_logic(interaction):
+				interaction.perform(*args)
+
+		## for name,interaction in self.Interactions.items():
+		##	interaction(entity=self, data=data) # interaction is implemented via __call__
 			# Also, Dof interactions are SelfInteractions - so they are called with entity= and data=
 
-	def add_dof(self, name, dof):
+	def add(self, name, dof):
+		dof.parent = self
 		self.__setitem__(name, dof)
+		return dof
+
+	def reference(self):
+		return DofReference(self)
+
+	def action(self):
+		pass
+
+
+	@classmethod
+	def add_interaction(cls, *, name, action, selector=None, tag=None):
+		i = Interaction(name=name, action=action, selector=selector, tag=tag)
+		cls.Interactions.append(i)
+		return i
+
+	def add_client_interaction(self, *, name, action, selector=None, tag=None):
+		i = Interaction(name=name, action=action, selector=selector, tag=tag)
+		self.client_interactions.append(i)
+		return i
 
 	def __setitem__(self, name, subdof):
 		d = self.dofs
@@ -201,16 +254,42 @@ class Dof(metaclass=DofMeta, TreeStructure):
 		# self.dofs[name] = subdof
 
 	def __getitem__(self, name):
-		return self.__getattr__(self, name)
+		return self.__getattr__(name)
 
 	def __getattr__(self, name):
 		if name not in self.dofs:
 			raise AttributeError
 		return self.dofs[name]
 
-	def __setattr__(self, name, obj):
-		print("dof.setattr")
-		return self.__setitem__(name, obj)
+	def __dataprops__(self):
+		return self.dofs
+
+	# def __setattr__(self, name, obj):
+	# 	print("dof.setattr")
+	# 	return self.__setitem__(name, obj)
+# class DofReference:
+# 	def __init__(self, dof):
+# 		self.wrapped_dof = dof
+# 		self.parent = None
+# 		self.field = None
+# 		# self.wrapped_dof = None
+
+# 	def __getitem__(self, name):
+# 		child = self.wrapped_dof[name]
+# 		if isinstance(child, Dof):
+# 			return DofReference(child)
+# 		else:
+# 			r = DofReference(None)
+# 			r.parent = self
+# 			r.field = name
+# 			return r
+
+# 	@property
+# 	def value(self):
+# 		if self.wrapped_dof is not None:
+# 			return self.wrapped_dof
+# 		else:
+# 			return self.parent[fieldx]
 
 if __name__ == "__main__":
 	class PP(Dof):

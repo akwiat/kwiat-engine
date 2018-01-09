@@ -25,49 +25,53 @@ class DofInteraction():
 # 	pass
 
 class Interaction:
-	def __init__(self):
-		if not isinstance(targets, list):
-			targets = [targets]
-
+	def __init__(self, *, name, action, selector=None, tag=None):
 		self.name = name
-		self.selector = None 
-		self.filter = None
-		# self.target_names = targets
-		# self.target_lists = {}
+		self.action = action
+		self.selector = selector
+		self.tag = tag
 
-		self.actions = []
+	def perform(self, *args, **kwargs):
+		# print("performing: ", self.name)
+		if self.selector is None:
+			# print(args)
+			self.action(*args, **kwargs)
+			# self.action(*args, **kwargs)
+		else:
+			raise NotImplementedError
+
 
 	# def perform(self, *entities, **data):
 	# 	self.interaction_logic(*entities, **data)
 
-	def targets(dof):
-		if !self.selector:
-			yield dof
-			return
-		else:
-			for d in dof.items():
-				if (self.selector(d)):
-					yield d
-			return
+	# def targets(dof):
+	# 	if not self.selector:
+	# 		yield dof
+	# 		return
+	# 	else:
+	# 		for d in dof.items():
+	# 			if (self.selector(d)):
+	# 				yield d
+	# 		return
 
-	def perform(self, dof):
-		for t in self.targets(dof):
-			self.interaction_logic(t)
+	# def perform(self, dof):
+	# 	for t in self.targets(dof):
+	# 		self.interaction_logic(t)
 
-	def interaction_logic(target):
-		# actually do stuff here
-		# intended for subclass override (think carefully about how)
-		pass
+	# def interaction_logic(target):
+	# 	# actually do stuff here
+	# 	# intended for subclass override (think carefully about how)
+	# 	pass
 
 
-	def gather_targets(self, *, gather_fn):
-		self.target_lists = {tname:gather_fn(tname) for tname in self.target_names}
+	# def gather_targets(self, *, gather_fn):
+	# 	self.target_lists = {tname:gather_fn(tname) for tname in self.target_names}
 
-	@classmethod
-	def Build(name, logic=None, selector=None, filter=None):
-		ret = Interaction(name)
-		ret.selector = selector
-		ret.filter = filter
+	# @classmethod
+	# def Build(name, logic=None, selector=None, filter=None):
+	# 	ret = Interaction(name)
+	# 	ret.selector = selector
+	# 	ret.filter = filter
 		
 
 		

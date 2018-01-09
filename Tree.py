@@ -1,12 +1,13 @@
 
 
-def MakeTreeStructure(name_field="name"):
+def MakeTreeStructure(name_field_arg="name", store_parent_ref=True):
 
 	class TreeStructure:
-		name_field = name_field
+		name_field = name_field_arg
 		def __init__(self):
-			super().__init__()
+			# super().__init__()
 			self.children = []
+
 
 		def find_child(self, name, recursive=True):
 			# Breadth first search

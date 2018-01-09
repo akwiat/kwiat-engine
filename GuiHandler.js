@@ -25,11 +25,31 @@ SpecificGuiHandler.prototype.update = function() {
   }
 }
 
-class GuiHandler() {
+class GuiHandler {
   constructor() {
-    this.guiobj = {};
+    this.dataObj = {};
     this.gui = new dat.GUI();
+    this.objDict = {}
   }
+
+  add(name, initval) {
+    this.dataObj[name] = initval
+    const ret = this.gui.add(this.dataObj, name)
+    this.objDict[name] = ret
+    return ret
+  }
+
+  test(guiobj) {
+    guiobj.setValue(303)
+    guiobj.updateDisplay()
+  }
+
+  getObj(name) {
+    return this.objDict[name]
+  }
+  
   // To update the gui, just change the values in the object..
   // To have changes to the gui do stuff, use the callback
 }
+
+GuiHandlerObj = GuiHandler

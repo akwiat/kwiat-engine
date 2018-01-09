@@ -1,7 +1,5 @@
 from Dof import Dof
-from Vector import CreateVector
-from BasicKinematics import BasicKinematics
-
+from Interaction import Interaction
 def CreatePosition(universe=None, VectorType=None):
 	V = universe.dofs["Vector"]
 	# V = VectorType or universe.get_type("Vector") or CreateVector(d=2)
@@ -15,6 +13,7 @@ def CreatePosition(universe=None, VectorType=None):
 
 	class PositionDegree(Dof):
 		def __init__(self):
+			super().__init__()
 			self.x = V()
 			self.v = V()
 			self.a = V()
@@ -26,17 +25,20 @@ def CreateStaticPosition(universe=None):
 
 	class StaticPosition(Dof):
 		def __init__(self):
+			super().__init__()
 			self.position = V()
 
 	return StaticPosition
 
 def CreateKinematicPosition(universe=None):
 	def BK(pd):
-		pd["x"] += pd["v"]
-		pd["v"] += pd["a"]
+		# print("pos: ", pd.x, pd.v)
+		pd.x += pd.v
+		pd.v += pd.a
+		# pd["x"] += pd["v"]
+		# pd["v"] += pd["a"]
 
 	KP = CreatePosition(universe=universe)
-	bk = Interaction.Build(logic=BK) # Selector is none, filter is none
-	KP.register_interaction("basic_kinematics", bk)
+	KP.add_interaction(name="basic_kinematics", action=BK)
 	# KP.Interactions.append(BasicKinematics(name="basic_kinematics"))
 	return KP

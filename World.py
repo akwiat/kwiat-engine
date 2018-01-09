@@ -2,18 +2,27 @@ import random
 
 from Dof import Dof
 
-class World():
+class WorldDof(Dof):
+	def __init__(self):
+		super().__init__()
+		self.current_step = 0
+
+	def action(self):
+		self.current_step += 1
+		print("current step", self.current_step)
+
+class World:
 	FileExtension = ".world"
-	def __init__(self, *, universe, world_dof):
+	def __init__(self, *, universe):
 		self.universe = universe
 
 
-		self.world_dof = Dof()
+		self.root_dof = WorldDof()
 		# self.worldSize = self.universe.worldSize
 		# self.interactionManager = InteractionManager(self.particleCollections, self.universe.Interactions)
 		self.random_source = random.Random()
 		self.random_source.seed(1001)
-		self.current_step = 0
+
 
 
 		# self.create_particle_collections() # Intended for subclass override
@@ -22,36 +31,36 @@ class World():
 
 		## self.import_universe_interactions
 
-		self.initialize() # intended for subclass override
+		# self.initial_conditions() # intended for subclass override
 
 
 
-
-	def propagate(self, dt=1):
+	def propagate(self):
+		# print("propagating: {}".format(self.current_step))
 		# self.perform_interactions(random_source = self.random_source, universe = self.universe, step_num = self.current_step)
 		
 		# for k,v in self.particleCollections.items():
 		# 	v.propagate(dt, random_source = self.random_source)
-		self.world_dof.process_inputs()
-
-		self.world_dof.propagate()
-
-		if self.graphics_manager:
-			self.graphics_manager.update()
 
 
+		# self.root_dof.process_inputs()
+		self.root_dof.propagate()
+		# if self.graphics_manager:
+		# 	self.graphics_manager.update()
 
-		self.current_step += 1
+
+
+		# self.current_step += 1
 
 	def add_list(name, *, Type, initializer=None):
-		self.world_dof.add_list(name, Type=Type, initializer=initializer)
+		self.root_dof.add_list(name, Type=Type, initializer=initializer)
 
-	def initialize():
-		pass
+	def initial_conditions():
+		raise NotImplementedError
 
 	def import_universe_interactions(self):
 		for u_interaction in self.universe.interactions:
-			self.world_dof.add_instance_interaction(u_interaction)
+			self.root_dof.add_instance_interaction(u_interaction)
 
 	def copy_type_interactions(self):
 		type_interactions = self.universe.interactions
@@ -148,3 +157,7 @@ class World():
 	@classmethod
 	def copy(cls, source, target):
 		shutil.copy(cls.makeName(source), cls.makeName(target))
+
+class ClientWorld(World):
+	def run(self):
+		self.universe.client.run(self.propagate)
