@@ -101,7 +101,8 @@ class BDWorld(ClientWorld):
 		self.tag_logic = self.tag_logic_paused
 
 
-		self.universe.client.gui_track_time(self.root_dof, ObjReference(self.root_dof, prop="current_step"), "time", gui_controls=True)
+		ct = self.universe.client.gui_track_time(self.root_dof, ObjReference(self.root_dof, prop="current_step"), "time", gui_controls=True)
+		ct.tag = "paused"
 		self.universe.client.gui_button("PausePlay", self.pause_play)
 		
 
