@@ -1,18 +1,19 @@
 from browser import window, timer
 
-from ObjReference import ObjReference
+from ObjReference import ObjReference, ObjReferenceFnWrapper
 
 class UpdateAction:
-	def __init__(self, position, graphic, scale, y_size):
-		self.position = position
+	def __init__(self, obj_ref, graphic, scale, y_size):
+		self.obj_ref = obj_ref
 		self.graphic = graphic
 		self.scale = scale
 		self.y_size = y_size
 
 	def __call__(self):
 		# print("display x: ", self.position[0])
-		self.graphic.obj.x = self.position[0] * self.scale
-		self.graphic.obj.y = self.y_size - (self.position[1] * self.scale)
+		position = self.obj_ref.value
+		self.graphic.obj.x = position[0] * self.scale
+		self.graphic.obj.y = self.y_size - (position[1] * self.scale)
 		# print("display: ", self.graphic.obj.x, self.graphic.obj.y)
 
 class GuiManager:
@@ -20,13 +21,13 @@ class GuiManager:
 		self.jsobj = window.GuiHandlerObj.new()
 
 class GuiTrackAction:
-	def __init__(self, obj_ref, gui_obj, scale):
+	def __init__(self, obj_ref, gui_obj, transform):
 		self.obj_ref = obj_ref
 		self.gui_obj = gui_obj
-		self.scale = scale
+		self.transform = transform
 
 	def __call__(self):
-		nval = self.obj_ref.value *self.scale
+		nval = self.transform(self.obj_ref.value)
 		# print("gui setting: ", nval)
 		# print(self.gui_obj, self.scale)
 		self.gui_obj.setValue(nval)
@@ -60,82 +61,145 @@ class Client:
 	def add_new(self):
 		raise NotImplementedError
 
+	def display_pos(self, p):
+		return p*self.world2display
 
-	def display(self, dof): #dof must be a position dof
-		graphic = self.add_new()
+	def world_pos(self, p):
+		return p*self.display2world
+
+	def world_vel(self, v):
+		return v*self.display2world / self.step2time
+
+	def world_acc(self, a):
+		return a*self.display2world / self.step2time**2
+
+
+	def display(self, dof, fn_name): #dof must be a position dof
+		fn = getattr(self, fn_name)
+		graphic = fn()
 		ua = UpdateAction(dof.x, graphic, self.world2screen, self.screen_size)
 		dof.add_client_interaction(name="display", action=ua, tag="display")
 
+	def display_obj(self, dof, obj_ref, fn_name):
+		fn = getattr(self, fn_name)
+		graphic = fn()
+		ua = UpdateAction(obj_ref, graphic, self.world2screen, self.screen_size)
+		dof.add_client_interaction(name="display", action=ua, tag="display")
 
-	def gui_track_time(self, dof, obj_ref, name, gui_controls=False):
-		# print(self.step2time)
-		interaction = self.gui_track(dof, obj_ref, name, scale=1/self.step2time)
-		interaction.action.gui_obj = interaction.action.gui_obj.min(0).max(100).step(1/self.step2time)
+
+	# def gui_track_time(self, dof, name, obj_ref, gui_controls=False):
+	# 	# print(self.step2time)
+	# 	interaction = self.gui_track(dof, name, obj_ref, scale=1/self.step2time)
+	# 	interaction.action.gui_obj = interaction.action.gui_obj.min(0).max(10).step(1/self.step2time)
 		
-		if gui_controls:
-			ci = self.gui_controls(dof, obj_ref, name, self.step2time)
-			return ci
-		else:
-			return interaction
+	# 	if gui_controls:
+	# 		ci = self.gui_controls(dof, name, obj_ref, self.step2time)
+	# 		return ci
+	# 	else:
+	# 		return interaction
 
 
-	def gui_track_pos(self, dof, obj_ref, name, gui_controls=False):
-		interaction = self.gui_track(dof, obj_ref, name, scale=self.world2display)
-		interaction.action.gui_obj = interaction.action.gui_obj.min(0).max(self.display_size).step(self.display_size/1e4)
+	# def gui_track_pos(self, dof, name, obj_ref, gui_controls=False):
+	# 	interaction = self.gui_track(dof, name, obj_ref, scale=self.world2display)
+	# 	interaction.action.gui_obj = interaction.action.gui_obj.min(0).max(self.display_size).step(self.display_size/1e4)
 
-		if gui_controls:
-			ci = self.gui_controls(dof, obj_ref, name, self.display2world)
-			return ci
-		else:
-			return interaction
-
-
-	def gui_track_velocity(self, dof, obj_ref, name, gui_controls=False):
-		scale = self.world2display*self.step2time
-		interaction = self.gui_track(dof, obj_ref, name, scale=scale)
-		vscale = self.display_size*3
-		interaction.action.gui_obj = interaction.action.gui_obj.min(-vscale).max(vscale).step(vscale/1e4)
-
-		if gui_controls:
-			ci = self.gui_controls(dof, obj_ref, name, 1/scale)
-			return ci
-		else:
-			return interaction
+	# 	if gui_controls:
+	# 		ci = self.gui_controls(dof, name, obj_ref, self.display2world)
+	# 		return ci
+	# 	else:
+	# 		return interaction
 
 
-	def gui_track_acceleration(self, dof, obj_ref, name, gui_controls=False):
-		scale = self.world2display*(self.step2time*self.step2time)
-		interaction = self.gui_track(dof, obj_ref, name, scale=scale)
-		ascale = self.display_size*1.5
-		interaction.action.gui_obj = interaction.action.gui_obj.min(-ascale).max(ascale).step(ascale/1e4)
+	# def gui_track_velocity(self, dof, name, obj_ref, gui_controls=False):
+	# 	scale = self.world2display*self.step2time
+	# 	interaction = self.gui_track(dof, name, obj_ref, scale=scale)
+	# 	vscale = self.display_size*3
+	# 	interaction.action.gui_obj = interaction.action.gui_obj.min(-vscale).max(vscale).step(vscale/1e4)
 
-		if gui_controls:
-			ci = self.gui_controls(dof, obj_ref, name, 1/scale)
-			return ci
-		else:
-			return interaction
+	# 	if gui_controls:
+	# 		ci = self.gui_controls(dof, name, obj_ref, 1/scale)
+	# 		return ci
+	# 	else:
+	# 		return interaction
 
 
-	def gui_track(self, dof, obj_ref, name, scale=1):
-		gui_obj = self.gui_manager.jsobj.add(name, obj_ref.value*scale)
-		# if minval is not None: gui_obj = gui_obj.min(minval)
-		# if maxval is not None: gui_obj = gui_obj.max(maxval)
-		# if step is not None: gui_obj = gui_obj.step(step)
+	# def gui_track_acceleration(self, dof, name, obj_ref, gui_controls=False):
+	# 	scale = self.world2display*(self.step2time*self.step2time)
+	# 	interaction = self.gui_track(dof, name, obj_ref, scale=scale)
+	# 	ascale = self.display_size*1.5
+	# 	interaction.action.gui_obj = interaction.action.gui_obj.min(-ascale).max(ascale).step(ascale/1e4)
 
-		gta = GuiTrackAction(obj_ref, gui_obj, scale)
+	# 	if gui_controls:
+	# 		ci = self.gui_controls(dof, name, obj_ref, 1/scale)
+	# 		return ci
+	# 	else:
+	# 		return interaction
+
+
+	def gui_track(self, dof, name, obj_ref=None, fn=None, scale=None, 
+		transform=None, display_type=None, gui_controls=False, gui_name=None):
+		if display_type == "position":
+			scale = self.world2display
+			invscale = self.display2world
+			minval = 0
+			maxval = self.display_size
+			step = maxval/1e3
+		elif display_type == "acceleration":
+			scale = self.world2display*(self.step2time**2)
+			invscale = 1/scale
+			minval = -self.display_size*1.5
+			maxval = -minval
+			step = maxval/1e3
+		elif display_type == "velocity":
+			scale = self.world2display*self.step2time
+			invscale = 1/scale
+			minval = -1*self.display_size*3
+			maxval = -minval
+			step = maxval/1e3
+		elif display_type == "time":
+			scale = 1/self.step2time
+			invscale = 1/scale
+			minval = 0
+			maxval = 10
+			step = 1/self.step2time
+		elif display_type == "energy":
+			scale = (self.world2display*self.step2time)**2
+			invscale = 1/scale
+			minval = 0
+			maxval = 100
+			step = maxval/1e3
+
+		if scale is not None:
+			transform = lambda x: x*scale
+
+		if fn:
+			if obj_ref:
+				raise ValueError("fn and obj_ref both defined")
+			obj_ref = ObjReferenceFnWrapper(fn)
+
+
+		ival = obj_ref.value
+		gui_obj = self.gui_manager.jsobj.add(name, transform(ival), gui_name)
+		gui_obj = gui_obj.min(minval).max(maxval).step(step)
+		gta = GuiTrackAction(obj_ref, gui_obj, transform)
 		interaction = dof.add_client_interaction(name="gui_track", action=gta)
+
+		if gui_controls:
+			ci = self.gui_controls(dof, gui_obj, obj_ref, invscale)
+			return ci
+
 		return interaction
 
 
-	def gui_controls(self, dof, obj_ref, name, scale):
-		gui_obj = self.gui_manager.jsobj.getObj(name)
+	def gui_controls(self, dof, gui_obj, obj_ref, scale):
+		# gui_obj = self.gui_manager.jsobj.getObj(name)
 		gca = GuiControlsAction(obj_ref, gui_obj, scale)
 		ci = dof.add_client_interaction(name="gui_controls", action=gca)
 		return ci
 
 
-	def gui_button(self, name, on_click):
-		self.gui_manager.jsobj.add(name, on_click)
+	def gui_button(self, name, on_click, gui_name=None):
+		self.gui_manager.jsobj.add(name, on_click, gui_name)
 
 
 	def run(self, fn):

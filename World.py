@@ -1,15 +1,8 @@
 import random
-
-from Dof import Dof
-
-class WorldDof(Dof):
-	def __init__(self):
-		super().__init__()
-		self.current_step = 0
-
-	def action(self):
-		self.current_step += 1
-		print("current step", self.current_step)
+from itertools import chain
+from Dof import Dof, WorldDof
+import copy
+from Interaction import Interaction
 
 class World:
 	FileExtension = ".world"
@@ -17,11 +10,19 @@ class World:
 		self.universe = universe
 
 
-		self.root_dof = WorldDof()
+		self.root_dof = universe.dofs["WorldDof"]() if "WorldDof" in universe.dofs else WorldDof()
 		# self.worldSize = self.universe.worldSize
 		# self.interactionManager = InteractionManager(self.particleCollections, self.universe.Interactions)
 		self.random_source = random.Random()
 		self.random_source.seed(1001)
+
+
+		# self.interactions = []
+		# self.client_interactions = []
+		self.interaction_list = []
+		self.client_interaction_list = []
+
+		self.tag_logic = None
 
 
 
@@ -32,25 +33,61 @@ class World:
 		## self.import_universe_interactions
 
 		# self.initial_conditions() # intended for subclass override
+	def initialize(self):
+		self.all_interactions()
 
+		# for i in self.interaction_list:
+		# 	i.initialize(self)
+
+		# for d in iter(self.root_dof):
+		# 	i = getattr(d, "initialize", None)
+		# 	if i:
+		# 		i(world=self)
+
+			# d.initialize(world=self)
+
+	def all_interactions(self):
+		for d in iter(self.root_dof):  # for each dof
+			self.client_interaction_list.extend(d.client_interactions)
+
+			for i in d.Interactions:
+				ic = copy.copy(i)
+				ic.bound_dof = d
+				self.interaction_list.append(ic)
+
+			a = getattr(d, "action", None)
+			# print(a)
+			if a:
+				i = Interaction(name="method_interaction", action=a, tag=getattr(d, "tag", None))
+				# i.bound_dof = d
+				self.interaction_list.append(i)
+		# for v in map(lambda d: d.Interactions, iter(self.root_dof)):
+		# 	print(v.name)
+
+		# dlist = list(iter(self.root_dof))
+		# for d in dlist:
+		# 	print(d)
+
+		# for x in chain(*map(lambda d: d.Interactions, list(iter(self.root_dof)))):
+		# 	print("iteration", x.name)
+
+		# for x in chain(*map(lambda d: d.client_interactions, list(iter(self.root_dof)))):
+		# 	print("c", x.name)
+		# self.dof_map(lambda d: d.Interactions)
+
+	def dof_map(self, fn):
+		return map(fn, iter(self.root_dof))
 
 
 	def propagate(self):
-		# print("propagating: {}".format(self.current_step))
-		# self.perform_interactions(random_source = self.random_source, universe = self.universe, step_num = self.current_step)
-		
-		# for k,v in self.particleCollections.items():
-		# 	v.propagate(dt, random_source = self.random_source)
+		for i in self.interaction_list:
+			# print(i.name)
+			Dof.perform_interaction(i, tag_logic=self.tag_logic)
 
+		for i in self.client_interaction_list:
+			Dof.perform_interaction(i, tag_logic=self.tag_logic)
+		# self.root_dof.propagate(tag_logic=self.tag_logic)
 
-		# self.root_dof.process_inputs()
-		self.root_dof.propagate()
-		# if self.graphics_manager:
-		# 	self.graphics_manager.update()
-
-
-
-		# self.current_step += 1
 
 	def add_list(name, *, Type, initializer=None):
 		self.root_dof.add_list(name, Type=Type, initializer=initializer)

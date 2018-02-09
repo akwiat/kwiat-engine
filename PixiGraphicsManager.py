@@ -17,16 +17,27 @@ from Client import Client
 class PixiGraphicsManager(Client):
 	def __init__(self, interval=100):
 		h = window.innerHeight
+		# self.h = h
 		print("Creating Pixi App of size: ", h)
 		super().__init__(h, interval=interval)
 		self.app = window.PIXI.Application.new({"width": h, "height": h,
 			"backgroundColor":0xd3d3d3})
 		document.body.appendChild(self.app.view)
 
-	def add_new(self):
+	# def add_new(self):
+	# 	pg = PixiGraphic()
+	# 	self.app.stage.addChild(pg.obj)
+	# 	return pg
+
+	def make_new(self):
 		pg = PixiGraphic()
-		self.app.stage.addChild(pg.obj)
+		self.add_stage(pg)
 		return pg
+
+	def add_stage(self, pg):
+		self.app.stage.addChild(pg.obj)
+
+
 
 	def remove(self, pg):
 		self.app.stage.remove(pg.obj)
