@@ -137,7 +137,7 @@ class Client:
 
 
 	def gui_track(self, dof, name, obj_ref=None, fn=None, scale=None, 
-		transform=None, display_type=None, gui_controls=False, gui_name=None):
+		transform=None, display_type=None, gui_controls=False, gui_name=None, **kwargs):
 		if display_type == "position":
 			scale = self.world2display
 			invscale = self.display2world
@@ -168,6 +168,13 @@ class Client:
 			minval = 0
 			maxval = 100
 			step = maxval/1e3
+
+		if "minval" in kwargs:
+			minval = kwargs["minval"]
+		if "maxval" in kwargs:
+			maxval = kwargs["maxval"]
+		if "step" in kwargs:
+			step = kwargs["step"]
 
 		if scale is not None:
 			transform = lambda x: x*scale

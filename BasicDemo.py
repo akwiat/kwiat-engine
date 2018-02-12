@@ -40,7 +40,8 @@ def Particle(*, universe):
 				gui_controls=True, display_type="acceleration", gui_name=name)
 			ci_ay.tag = "paused"
 
-			ci_rpx = universe.client.gui_track(self["position"], "RelY", fn=lambda: self.relative()[1], display_type="position", gui_name=name)
+			ci_rpx = universe.client.gui_track(self["position"], "RelY", fn=lambda: self.relative()[1], 
+				display_type="position", gui_name=name, minval=-10)
 			ci_rpx.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "KE",
@@ -48,7 +49,7 @@ def Particle(*, universe):
 			ci_ke.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "PE",
-				fn=self.potential_energy, display_type="energy", gui_name=name+"energy")
+				fn=self.potential_energy, display_type="energy", gui_name=name+"energy", minval=-100)
 			ci_ke.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "Total E",
