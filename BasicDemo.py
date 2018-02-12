@@ -45,15 +45,15 @@ def Particle(*, universe):
 			ci_rpx.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "KE",
-				fn=self.kinetic_energy, display_type="energy", gui_name=name+"energy")
+				fn=self.kinetic_energy, display_type="energy", gui_name=name+"energy", minval=-150, maxval=150)
 			ci_ke.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "PE",
-				fn=self.potential_energy, display_type="energy", gui_name=name+"energy", minval=-100)
+				fn=self.potential_energy, display_type="energy", gui_name=name+"energy", minval=-150, maxval=150)
 			ci_ke.tag = "display"
 
 			ci_ke = universe.client.gui_track(self["position"], "Total E",
-				fn=self.total_energy, display_type="energy", gui_name=name+"energy")
+				fn=self.total_energy, display_type="energy", gui_name=name+"energy", maxval=150, minval=-150)
 			ci_ke.tag = "display"
 			# self.tag = "paused"
 
@@ -101,7 +101,7 @@ def BDWorldDof(*, universe):
 
 
 			# self.origin += [0, 2]
-			self.origin[1] += universe.client.world_pos(5)
+			# self.origin[1] += universe.client.world_pos(5)
 			# print(self.origin)
 			ot = universe.client.gui_track(self, "originY", ObjReference(self.origin, field=1), 
 				gui_controls=True, display_type="position", gui_name="global")
