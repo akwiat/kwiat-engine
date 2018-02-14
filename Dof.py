@@ -1,6 +1,8 @@
 import json
 from Tree import TreeStructure
 from Interaction import Interaction
+
+from itertools import chain
 def get_dataprops(obj):
 	dataprops = None
 	if hasattr(obj, "__dataprops__"):
@@ -195,18 +197,38 @@ class Dof(metaclass=DofMeta):
 
 		self.tag = None
 
+		w = getattr(self, "world", None)
+		if w:
+			self.initialize(world=w)
+
+	def __iter__(self):
+		# def ret_vals(t):
+		# 	print("tuple: ", t)
+		# 	return iter(t[1])
+
+		# for v in chain(*map(ret_vals, self.dofs.items())):
+		# 	print("yielding: ", v)
+		# 	yield v
+		# iter_list = [iter(v) for k,v in self.dofs.items()]
+		iter_list = list(map(lambda t: iter(t[1]), self.dofs.items()))
+		# return iter_list
+		for c in chain(*iter_list):
+			yield c
+		yield self
+		# return [v for k,v in self.dofs.items()]
+
 	def propagate(self, data=None, tag_logic=None):
 		for name, dof in self.dofs.items():
 			# print("propagating dof: ", name)
 
 			dof.propagate(data=data, tag_logic=tag_logic)
 
-		for i in self.Interactions:
-			self.perform_interaction(i, self, tag_logic=tag_logic)
+		# for i in self.Interactions:
+		# 	self.perform_interaction(i, self, tag_logic=tag_logic)
 			# i.perform(self)
 
-		if tag_logic is None or tag_logic(self) is True:
-			self.action()
+		# if tag_logic is None or tag_logic(self) is True:
+		# 	self.action()
 
 		for ci in self.client_interactions:
 			self.perform_interaction(ci, tag_logic=tag_logic)
@@ -233,9 +255,11 @@ class Dof(metaclass=DofMeta):
 	def reference(self):
 		return DofReference(self)
 
-	def action(self):
-		pass
+	# def action(self):
+	# 	pass
 
+	def initialize(self, *args, **kwargs):
+		print("parent Dof::initialize")
 
 	@classmethod
 	def add_interaction(cls, *, name, action, selector=None, tag=None):
@@ -263,6 +287,17 @@ class Dof(metaclass=DofMeta):
 
 	def __dataprops__(self):
 		return self.dofs
+
+
+
+class WorldDof(Dof):
+	def __init__(self):
+		super().__init__()
+		self.current_step = 0
+
+	def action(self):
+		self.current_step += 1
+		print("current step", self.current_step)
 
 	# def __setattr__(self, name, obj):
 	# 	print("dof.setattr")

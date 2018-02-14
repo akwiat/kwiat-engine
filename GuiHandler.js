@@ -1,31 +1,31 @@
-function SpecificGuiHandler() {
-  this.guiobj = {
-      Energy:SharedData.PlayerMaxLife
-      ,Speed:0
-      ,Base:SharedData.BaseLife
+// function SpecificGuiHandler() {
+//   this.guiobj = {
+//       Energy:SharedData.PlayerMaxLife
+//       ,Speed:0
+//       ,Base:SharedData.BaseLife
 
-    };
-  this.gui = new dat.GUI();
-  this.energy = this.gui.add(this.guiobj,"Energy").min(0).max(SharedData.PlayerMaxLife).step(.001);
-  this.base = this.gui.add(this.guiobj,"Base").min(0).max(SharedData.BaseLife).step(.001);
-  this.speed = this.gui.add(this.guiobj,"Speed").min(0).max(SharedData.PlayerMaxSpeed).step(.001);
+//     };
+//   this.gui = new dat.GUI();
+//   this.energy = this.gui.add(this.guiobj,"Energy").min(0).max(SharedData.PlayerMaxLife).step(.001);
+//   this.base = this.gui.add(this.guiobj,"Base").min(0).max(SharedData.BaseLife).step(.001);
+//   this.speed = this.gui.add(this.guiobj,"Speed").min(0).max(SharedData.PlayerMaxSpeed).step(.001);
 
-}
-SpecificGuiHandler.prototype.setAndUpdate = function(str,obj,val) {
-  this.guiobj[str] = val;
-  this[obj].updateDisplay();
-}
-SpecificGuiHandler.prototype.update = function() {
-  if (clientgame.player) {
-  var realenergy = client.player.life;
-  if (realenergy != this.guiobj.Energy) {
-    this.guiobj.Energy = realenergy;
-    this.energy.updateDisplay();
-  }
-  }
-}
+// }
+// SpecificGuiHandler.prototype.setAndUpdate = function(str,obj,val) {
+//   this.guiobj[str] = val;
+//   this[obj].updateDisplay();
+// }
+// SpecificGuiHandler.prototype.update = function() {
+//   if (clientgame.player) {
+//   var realenergy = client.player.life;
+//   if (realenergy != this.guiobj.Energy) {
+//     this.guiobj.Energy = realenergy;
+//     this.energy.updateDisplay();
+//   }
+//   }
+// }
 
-class GuiHandler {
+class SingleGui {
   constructor() {
     this.dataObj = {};
     this.gui = new dat.GUI();
@@ -33,6 +33,9 @@ class GuiHandler {
   }
 
   add(name, initval) {
+    if (name in this.objDict) {
+      throw("That name already exists in this GUI")
+    }
     this.dataObj[name] = initval
     const ret = this.gui.add(this.dataObj, name)
     this.objDict[name] = ret
@@ -50,6 +53,19 @@ class GuiHandler {
   
   // To update the gui, just change the values in the object..
   // To have changes to the gui do stuff, use the callback
+}
+
+class GuiHandler {
+  constructor() {
+    this.guis = {}
+  }
+
+  add(name, initval, gui_name="default") {
+    if (!(gui_name in this.guis)) {
+      this.guis[gui_name] = new SingleGui()
+    }
+    return this.guis[gui_name].add(name, initval)
+  }
 }
 
 GuiHandlerObj = GuiHandler

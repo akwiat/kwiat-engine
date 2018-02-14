@@ -1,3 +1,5 @@
+from ClassUtil import CustomCopy
+
 class InteractionLogic:
 	def __call__(self, *objects, data=None):
 		raise NotImplementedError()
@@ -23,23 +25,74 @@ class DofInteraction():
 
 # class SinglePassInteraction():
 # 	pass
-
+# @QuickClone("bound_dof", pDict={"action":"actions"})
+# @CustomCopy(actions=lambda actions: actions[:])
 class Interaction:
 	def __init__(self, *, name, action, selector=None, tag=None):
 		self.name = name
-		self.action = action
+		self.actions = [action]
 		self.selector = selector
 		self.tag = tag
+
+		self.bound_dof = None
+		self.world = None
+
+		# self.__class__ = InteractionLogic
 
 	def perform(self, *args, **kwargs):
 		# print("performing: ", self.name)
 		if self.selector is None:
 			# print(args)
-			self.action(*args, **kwargs)
+			for a in self.actions:
+				if self.bound_dof:
+					# print("args: ", args)
+					a(self.bound_dof, *args, **kwargs)
+				else:
+					a(*args, **kwargs)
 			# self.action(*args, **kwargs)
 		else:
 			raise NotImplementedError
 
+	def initialize(self, world):
+		self.world = world
+
+	def __copy__(self):
+		ret = type(self)(name=self.name, action=None, selector=self.selector, tag=self.tag)
+		ret.actions = self.actions[:]
+		ret.bound_dof = self.bound_dof
+		ret.world = self.world
+		return ret
+		# ret = copy.copy(self)
+		# ret.actions = self.actions[:]
+
+	@property
+	def action(self):
+		return self.actions[0]
+
+
+	def add_action(self, action):
+		self.actions.append(action)
+
+	def bind_to_dof(self, dof):
+		self.bound_dof = dof
+
+if __name__ == "__main__":
+	import copy
+
+	i = Interaction(name='n', action=lambda x: print("action", x), tag="tag")
+	print(type(i))
+
+	i2 = Interaction(name='o', action=lambda x: print("action2", x), tag="tagg2")
+	# i.__class__ = InteractionLogic
+	# i2 = i.clone()
+	# print(vars(i2))
+
+
+	i3 = copy.copy(i)
+	print(type(i3))
+	i3.actions.append(4)
+	print("copy: ", vars(i3))
+	print("orig: ", vars(i))
 
 	# def perform(self, *entities, **data):
 	# 	self.interaction_logic(*entities, **data)
@@ -127,5 +180,7 @@ class SelfCollision(InteractionLogic):
 
 		if p1.position == p2.position:
 			raise BaseException("collided")
+
+
 
 

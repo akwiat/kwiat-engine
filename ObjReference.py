@@ -5,10 +5,10 @@ class ObjReference:
 		self.prop = prop
 		# self.wrapped_dof = None
 
-	def __getitem__(self, name):
-		nparent = self.value
-		r = ObjReference(nparent, name)
-		return r
+	# def __getitem__(self, name):
+	# 	nparent = self.value
+	# 	r = ObjReference(nparent, name)
+	# 	return r
 
 	@property
 	def value(self):
@@ -25,3 +25,14 @@ class ObjReference:
 		else:
 			self.parent[self.field] = nval
 			return self
+
+
+class ObjReferenceFnWrapper:
+	def __init__(self, fn):
+		self.fn = fn
+
+	@property
+	def value(self):
+		return self.fn()
+
+	# No setter
